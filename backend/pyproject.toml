@@ -1,0 +1,50 @@
+[project]
+name = "portal-transparencia-backend"
+version = "1.0.0"
+description = "Production-grade FastAPI backend with Deep Agents integration"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "pydantic==2.10.5",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv==1.0.1",
+    "httpx>=0.24.0",
+    "deepagents",
+    "tavily-python",
+    "langchain",
+    "langgraph",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008"]  # B008: FastAPI Depends() in function defaults is standard pattern
+
+[tool.ruff.lint.per-file-ignores]
+"app/main.py" = ["E402"]  # Allow imports after load_dotenv()
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
