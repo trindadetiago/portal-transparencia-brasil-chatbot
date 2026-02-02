@@ -16,27 +16,33 @@ import {
   FileText,
   Globe,
   Calculator,
+  ListTodo,
 } from "lucide-react";
+import { useState } from "react";
+import {
+  getToolLabel,
+  hasCustomInputRenderer,
+  hasCustomOutputRenderer,
+  renderCustomInput,
+  renderCustomOutput,
+  getInputLabel,
+  getOutputLabel,
+} from "./tools";
 
 // Map tool names to icons
 function getToolIcon(toolName: string) {
   const name = toolName.toLowerCase();
+  
+  // Special tools
+  if (name === "write_todos") return ListTodo;
+  
+  // General categories
   if (name.includes("search") || name.includes("busca")) return Search;
   if (name.includes("database") || name.includes("dados")) return Database;
   if (name.includes("file") || name.includes("arquivo")) return FileText;
   if (name.includes("web") || name.includes("internet")) return Globe;
   if (name.includes("calc") || name.includes("math")) return Calculator;
   return Wrench;
-}
-
-// Map tool names to Portuguese labels
-function getToolLabel(toolName: string): string {
-  const name = toolName.toLowerCase();
-  if (name.includes("search")) return "Pesquisa";
-  if (name.includes("database")) return "Banco de Dados";
-  if (name.includes("web")) return "Consulta Web";
-  if (name.includes("file")) return "Leitura de Arquivo";
-  return toolName;
 }
 
 // Get state information in Portuguese
@@ -95,6 +101,8 @@ export default function ChatTool({
   toolMessagePart: ToolUIPart | DynamicToolUIPart;
   className?: string;
 }) {
+  const [viewMode, setViewMode] = useState<"normal" | "raw">("normal");
+  
   const toolName =
     toolMessagePart.type === "dynamic-tool"
       ? toolMessagePart.toolName
@@ -103,17 +111,24 @@ export default function ChatTool({
   const stateInfo = getStateInfo(toolMessagePart.state);
   const StateIcon = stateInfo.icon;
   const ToolIcon = getToolIcon(toolName);
+  
+  // Check if this tool has custom renderers
+  const hasCustomInputView = hasCustomInputRenderer(toolName);
+  const hasCustomOutputView = hasCustomOutputRenderer(toolName);
+  
+  // Get input for label
+  const toolInput = "input" in toolMessagePart ? toolMessagePart.input : undefined;
 
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem
         value="tool"
         className={cn(
-          "rounded-md border border-border/40 bg-muted/20 overflow-hidden",
+          "rounded-lg border-0 bg-muted/20 overflow-hidden",
           className
         )}
       >
-        <AccordionTrigger className="px-2.5 py-1.5 hover:no-underline hover:bg-muted/30 transition-colors [&[data-state=open]]:border-b">
+        <AccordionTrigger className="px-1.5 py-1.5 hover:no-underline hover:bg-muted/30 transition-colors">
           <div className="flex items-center gap-2 w-full">
             {/* Tool Icon */}
             <div className={cn(
@@ -127,7 +142,7 @@ export default function ChatTool({
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-medium text-muted-foreground">
-                  {getToolLabel(toolName)}
+                  {getToolLabel(toolName, toolInput)}
                 </span>
                 <span className={cn(
                   "inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded",
@@ -149,6 +164,36 @@ export default function ChatTool({
 
         <AccordionContent className="p-0">
           <div className="flex flex-col gap-2 p-2 bg-muted/20 text-xs">
+            {/* View Mode Toggle (only for tools with custom renderer) */}
+            {(hasCustomInputView || hasCustomOutputView) && toolMessagePart.state === "output-available" && (
+              <div className="flex gap-1 mb-1 justify-end">
+                <button
+                  onClick={() => setViewMode("normal")}
+                  className={cn(
+                    "text-[9px] px-2 py-0.5 rounded transition-colors",
+                    viewMode === "normal"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/70 text-muted-foreground"
+                  )}
+                  type="button"
+                >
+                  Normal
+                </button>
+                <button
+                  onClick={() => setViewMode("raw")}
+                  className={cn(
+                    "text-[9px] px-2 py-0.5 rounded transition-colors",
+                    viewMode === "raw"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/70 text-muted-foreground"
+                  )}
+                  type="button"
+                >
+                  Raw
+                </button>
+              </div>
+            )}
+            
             {/* Error Section */}
             {toolMessagePart.state === "output-error" && toolMessagePart.errorText && (
               <div className="rounded border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 p-2">
@@ -161,17 +206,21 @@ export default function ChatTool({
               </div>
             )}
 
-            {/* Input Section */}
+            {/* Input Section - Show custom or raw */}
             {"input" in toolMessagePart &&
             toolMessagePart.input !== undefined &&
             toolMessagePart.input !== null ? (
               <div className="rounded border border-border/50 bg-background/50 p-2">
                 <p className="text-[10px] font-semibold text-muted-foreground mb-1">
-                  Parâmetros
+                  {getInputLabel(toolName, viewMode)}
                 </p>
-                <pre className="text-[10px] font-mono bg-muted/30 rounded px-1.5 py-1 overflow-x-auto whitespace-pre-wrap">
-                  {renderValue(toolMessagePart.input)}
-                </pre>
+                {viewMode === "normal" && hasCustomInputView ? (
+                  renderCustomInput(toolName, toolMessagePart.input)
+                ) : (
+                  <pre className="text-[10px] font-mono bg-muted/30 rounded px-1.5 py-1 overflow-x-auto whitespace-pre-wrap">
+                    {renderValue(toolMessagePart.input)}
+                  </pre>
+                )}
               </div>
             ) : (
               <div className="text-[10px] text-muted-foreground/60 italic px-1">
@@ -186,11 +235,17 @@ export default function ChatTool({
               toolMessagePart.output !== null && (
                 <div className="rounded border border-green-200/50 dark:border-green-900/50 bg-green-50/50 dark:bg-green-950/20 p-2">
                   <p className="text-[10px] font-semibold text-green-700 dark:text-green-300 mb-1">
-                    Resultado
+                    {getOutputLabel(toolName, viewMode)}
                   </p>
-                  <pre className="text-[10px] font-mono bg-background/30 rounded px-1.5 py-1 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
-                    {renderValue(toolMessagePart.output)}
-                  </pre>
+                  {viewMode === "normal" && hasCustomOutputView ? (
+                    <div className="text-[10px]">
+                      {renderCustomOutput(toolName, toolMessagePart.output)}
+                    </div>
+                  ) : (
+                    <pre className="text-[10px] font-mono bg-background/30 rounded px-1.5 py-1 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
+                      {renderValue(toolMessagePart.output)}
+                    </pre>
+                  )}
                 </div>
               )}
           </div>

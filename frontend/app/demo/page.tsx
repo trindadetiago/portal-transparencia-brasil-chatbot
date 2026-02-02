@@ -70,8 +70,26 @@ const demoMessages: UIMessage[] = [
           nome: "JOAO",
         },
         output: JSON.stringify([
-          { id: 12345, nome: "JOAO DA SILVA", cpf: "***123456**", orgao: "MINISTERIO DA EDUCACAO", cargo: "ANALISTA" },
-          { id: 12346, nome: "JOAO SANTOS", cpf: "***654321**", orgao: "MINISTERIO DA SAUDE", cargo: "TECNICO" },
+          {
+            servidor: {
+              id: 12345,
+              pessoa: { nome: "JOAO DA SILVA", cpfFormatado: "***.123.456-**" },
+              orgaoServidorExercicio: { codigo: "26000", nome: "MINISTERIO DA EDUCACAO", sigla: "MEC" },
+              funcao: { codigoFuncaoCargo: "ANALISTA", descricaoFuncaoCargo: "ANALISTA ADMINISTRATIVO" }
+            },
+            fichasCargoEfetivo: [],
+            fichasFuncao: []
+          },
+          {
+            servidor: {
+              id: 12346,
+              pessoa: { nome: "JOAO SANTOS", cpfFormatado: "***.654.321-**" },
+              orgaoServidorExercicio: { codigo: "36000", nome: "MINISTERIO DA SAUDE", sigla: "MS" },
+              funcao: { codigoFuncaoCargo: "TECNICO", descricaoFuncaoCargo: "TECNICO ADMINISTRATIVO" }
+            },
+            fichasCargoEfetivo: [],
+            fichasFuncao: []
+          },
         ]),
       },
       {
@@ -145,8 +163,8 @@ const demoMessages: UIMessage[] = [
           uf: "SP",
         },
         output: JSON.stringify([
-          { favorecido: "PREFEITURA DE SAO PAULO", cnpj: "46.395.000/0001-39", valor: 5000000.00, data: "2025-01-15" },
-          { favorecido: "HOSPITAL DAS CLINICAS", cnpj: "60.448.040/0001-22", valor: 2500000.00, data: "2025-01-20" },
+          { favorecido: "PREFEITURA DE SAO PAULO", cnpj: "46.395.000/0001-39", valor: 5000000.00, data: "2025-01-15", uf: "SP" },
+          { favorecido: "HOSPITAL DAS CLINICAS", cnpj: "60.448.040/0001-22", valor: 2500000.00, data: "2025-01-20", uf: "SP" },
         ]),
       },
       {
