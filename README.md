@@ -1,6 +1,7 @@
 # Portal Transparência - Deep Agents Chat
 
 Full-stack chat application with LangChain Deep Agents, FastAPI backend, and Next.js frontend.
+Communicate with the API of brazil's portal da transparencia and see the results in real time
 
 ## Setup
 
